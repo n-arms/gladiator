@@ -1,0 +1,84 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           memory-management-strats
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/memory-management-strats#readme>
+homepage:       https://github.com/githubuser/memory-management-strats#readme
+bug-reports:    https://github.com/githubuser/memory-management-strats/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2024 Author name here
+license:        BSD-3-Clause
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/memory-management-strats
+
+library
+  exposed-modules:
+      Alloc
+      IR
+      Lib
+      Lower
+      Monomorph
+      Parsed
+      Parser
+      Precedence
+      Program
+      Strip
+      Typed
+      Typer
+  other-modules:
+      Paths_memory_management_strats
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , parsers >=0.12
+    , transformers >=0.6.1
+    , trifecta >=2.1.4
+    , unordered-containers >=0.2
+  default-language: Haskell2010
+
+executable memory-management-strats-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_memory_management_strats
+  hs-source-dirs:
+      app
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , memory-management-strats
+    , parsers >=0.12
+    , transformers >=0.6.1
+    , trifecta >=2.1.4
+    , unordered-containers >=0.2
+  default-language: Haskell2010
+
+test-suite memory-management-strats-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_memory_management_strats
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , memory-management-strats
+    , parsers >=0.12
+    , transformers >=0.6.1
+    , trifecta >=2.1.4
+    , unordered-containers >=0.2
+  default-language: Haskell2010
