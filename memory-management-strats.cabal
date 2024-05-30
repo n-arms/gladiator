@@ -1,6 +1,6 @@
 cabal-version: 2.2
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -39,6 +39,8 @@ library
       Typer
   other-modules:
       Paths_memory_management_strats
+  autogen-modules:
+      Paths_memory_management_strats
   hs-source-dirs:
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
@@ -53,6 +55,8 @@ library
 executable memory-management-strats-exe
   main-is: Main.hs
   other-modules:
+      Paths_memory_management_strats
+  autogen-modules:
       Paths_memory_management_strats
   hs-source-dirs:
       app
@@ -70,6 +74,8 @@ test-suite memory-management-strats-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Paths_memory_management_strats
+  autogen-modules:
       Paths_memory_management_strats
   hs-source-dirs:
       test

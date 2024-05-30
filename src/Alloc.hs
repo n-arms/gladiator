@@ -75,6 +75,9 @@ blockJumpLiveRanges index (BlockJump _ args) = mconcat $ do
 
 type Alloc reg a = State (Env reg) a
 
+execAlloc :: Env reg -> alloc reg a -> Env reg
+execAlloc = flip execState 
+
 data RegAlloc reg = RegAlloc reg LiveRange
 
 data Env reg = Env {
@@ -83,11 +86,43 @@ data Env reg = Env {
   allocations :: HashMap Id reg
 }
 
-allocateBlock :: HashMap Id reg -> Block -> BlockAlloc reg
+freeUnused :: Int -> Alloc reg ()
+freeUnused index = do
+  env <- get
+  let activeRegs = active env
+  let toFree = filter (\(RegAlloc _ (LiveRange _ end)) -> end <= index) activeRegs <&> \(RegAlloc reg _) -> reg
+  let stillActive = filter (\(RegAlloc _ (LiveRange _ end)) -> end > index) activeRegs
+  put $ env { 
+    free = (free env) `union` (HashSet.fromList toFree),
+    active = stillActive
+  }
+
+allocateReg :: Id -> LiveRange -> Alloc reg ()
+allocateReg id range = do
+  env <- get
+  let reg = head $ HashSet.fromList $ free env
+  put $ env {
+    free = HashSet.delete reg $ free env,
+    active = (RegAlloc reg range):(active env),
+    allocations = HashMap.insert id reg $ env 
+  }
+
+class Register reg where
+  allRegisters :: HashSet reg
+
+allocateBlock :: Register reg => HashMap Id reg -> Block -> BlockAlloc reg
 allocateBlock argAllocs block@(Block args stmts result) = let
   LiveRanges liveRanges = findLiveRanges block
   orderedRanges = sortOn (\(_, (LiveRange start _)) -> start) $ HashMap.toList liveRanges
   startEnv = Env {
-    free = 
+    free = allRegisters `HashSet.difference` (HashMap.elems argAllocs),
+    active = [0..(length args) - 1] <&> \arg -> RegAlloc (argAllocs HashMap.! arg) (liveRanges HashMap.! arg),
+    allocations = argAllocs
   }
+  finalEnv = execAlloc startEnv $ allocateBlockIn 0 stmts
   in _
+
+allocateBlockIn :: Int -> [Statement] -> Alloc reg ()
+allocateBlockIn index [] = return ()
+allocateBlockIn index (Let name _ expr:rest) = do
+  freeUnused index

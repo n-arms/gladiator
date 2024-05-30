@@ -1,0 +1,32 @@
+/home/nick/Documents/code/haskell/gladiator/CHANGELOG.md:
+  hash: 3996b9ce3c6f14b3914c5dc778cfe0253c3e426531d89597fba474b18c35714a
+/home/nick/Documents/code/haskell/gladiator/README.md:
+  hash: bada997e66fc33c39050b53063f46c219857738f1d84f65848cd468b2cc770ca
+/home/nick/Documents/code/haskell/gladiator/memory-management-strats.cabal:
+  hash: 9540d655bab507653bc936ffc91273e8594c7677b34041e44d2a7eec6d9c9404
+/home/nick/Documents/code/haskell/gladiator/package.yaml:
+  hash: e2e64532175d23b4b67ea88af73deec724d3069257f13a74a2f7daacb8d63bf4
+/home/nick/Documents/code/haskell/gladiator/src/Alloc.hs:
+  hash: d3e30d2eff8173b3d0acb462ea454a1d05fe704be1ef8585eff40492b7c661b9
+/home/nick/Documents/code/haskell/gladiator/src/IR.hs:
+  hash: 45fcab4e1fec906b4a2a8d403dfa991afd258aeca5e5478db2e525f5c8c9e44a
+/home/nick/Documents/code/haskell/gladiator/src/Lib.hs:
+  hash: 11d6d255cb397fa45980eb516ea685146565d9de2108c4eea356ea41db8364be
+/home/nick/Documents/code/haskell/gladiator/src/Lower.hs:
+  hash: 0ca04d4880355e61ec888b64d1334242257fbd215a231dc36026b36a5c62daf4
+/home/nick/Documents/code/haskell/gladiator/src/Monomorph.hs:
+  hash: de7f3d61a6d30af9826b8929aa8b9d181732b1649f5e64879b888aa145795480
+/home/nick/Documents/code/haskell/gladiator/src/Parsed.hs:
+  hash: ee3002087401e5e33ef87fd86e45fb4d6ecc62faf67d70f857c804480f8fc4eb
+/home/nick/Documents/code/haskell/gladiator/src/Parser.hs:
+  hash: 20386ff089eeedf2b3dd20a12de5e848d7dfa75f8d40f4e533b4db3cf5a1c7de
+/home/nick/Documents/code/haskell/gladiator/src/Precedence.hs:
+  hash: 99bdebb768816e94bda379b39f5d5ad4d2f7073c9276be8aba673cc9c306ecfb
+/home/nick/Documents/code/haskell/gladiator/src/Program.hs:
+  hash: 914cc5d2f57fd8e901684148ddf1e8d2b5a23c39505fe7b20e886a6e8be3a261
+/home/nick/Documents/code/haskell/gladiator/src/Strip.hs:
+  hash: ed0a8450cfc134ad10bf1a0237c8d48e76764154046da353911597a2bd149c47
+/home/nick/Documents/code/haskell/gladiator/src/Typed.hs:
+  hash: c01885a9eb9a8d5bea4fc7baa56539b90a38c09bc1a4f73869b7b89c86baf370
+/home/nick/Documents/code/haskell/gladiator/src/Typer.hs:
+  hash: 333213c778d3bbfb570b962e8d9253f9a351a8b2866da2efe9c7c05f4da38431
