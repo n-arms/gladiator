@@ -73,11 +73,10 @@ blockJumpLiveRanges index (BlockJump _ args) = mconcat $ do
   var <- (atomVariables arg)
   return $ endRange index var
 
-
 type Alloc reg a = State (Env reg) a
 
-execAlloc :: Env reg -> Alloc reg a -> Env reg
-execAlloc env a = execState a env
+execAlloc :: Env reg -> Alloc reg a -> HashMap Id reg
+execAlloc env a = allocations $ execState a env
 
 data RegAlloc reg = RegAlloc reg LiveRange
 
@@ -130,3 +129,7 @@ allocateBlockIn index ranges (Let name _ expr:rest) = do
   freeUnused index
   allocateReg name $ ranges HashMap.! name
   allocateBlockIn (index + 1) ranges rest
+
+allocateFunction :: Register reg => Function -> HashMap Id reg -> [BlockAlloc reg]
+allocateFunction (Function name blocks) argRegs = let
+  blocks <&> \block -> execAlloc
