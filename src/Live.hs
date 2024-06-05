@@ -1,5 +1,12 @@
 module Live (
-  findLiveRanges
+  findLiveRanges,
+  Line,
+  StackSlot,
+  ActiveAlloc,
+  LiveRange(..),
+  LiveRanges(..),
+  rangeStart,
+  rangeEnd
 ) where 
 
 import IR
@@ -10,6 +17,16 @@ import Data.HashMap.Strict(HashMap)
 import qualified Data.HashSet as HashSet
 import Data.HashSet(HashSet)
 import Data.Functor
+
+type Line = Int
+type StackSlot = Int
+type ActiveAlloc = Int
+
+rangeStart :: LiveRange -> Line
+rangeStart (LiveRange line _) = line
+
+rangeEnd :: LiveRange -> Line
+rangeEnd (LiveRange _ line) = line
 
 data LiveRange = LiveRange Line Line
 

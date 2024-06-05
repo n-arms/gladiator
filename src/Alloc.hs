@@ -137,10 +137,6 @@ allocateBlockIn index ranges (Let name _ expr:rest) = do
   allocateBlockIn (index + 1) ranges rest
 -}
 
-type Line = Int
-type StackSlot = Int
-type ActiveAlloc = Int
-
 data Env reg = Env {
   -- mandatoryAllocs[line] = (i, r) means that on line `line`, id `i` *must* be bound to register `r`
   mandatoryAllocs :: HashMap Int (Id, reg),
@@ -149,64 +145,80 @@ data Env reg = Env {
   -- the set of currently free registers
   free :: [reg],
   -- active = (id, reg):rest means that currently id `id` is alloated to register `reg`
-  active :: [(Id, Location reg)]
+  active :: [(Id, Location reg)],
   -- the number of spills that have occured
   spillCount :: StackSlot
 }
 
-data Location reg = Register reg | Stack StackSlot
+data Location reg = InRegister reg | InStack StackSlot
 
-allocateReg :: Line -> Id -> Alloc reg
-allocateReg line id = do
+-- this DOES NOT emit an allocation instruction, as you could be calling it to unspill a register or store a new one
+-- you need to emit an allocation instruction yourself
+allocateReg :: Line -> Id -> [Id] -> Alloc reg reg
+allocateReg line id noSpill = do
   env <- get
   case free env of
-    reg:rest -> {
-      put $ env { free = rest }
+    reg:rest -> do {
+      put $ env { free = rest };
       allocateIdIntoReg line id reg
     }
-    [] -> spillThenAlloc line id
+    [] -> spillThenAlloc line id noSpill
 
-allocateIdIntoReg :: Line -> Id -> Reg -> Alloc reg ()
+allocateIdIntoReg :: Line -> Id -> reg -> Alloc reg ()
 allocateIdIntoReg line id reg = do
   env <- get
   put $ env { active = (id, Register reg):(active env) }
-  registerInstr line id reg
 
 lookupLiveRange :: Id -> Alloc reg LiveRange
 lookupLiveRange id = do
   env <- get
   return $ (liveRanges env) HashMap.! id
 
-lastEnding :: Alloc reg ActiveAlloc
-lastEnding = do
+lastEnding :: [Id] -> Alloc reg ActiveAlloc
+lastEnding noSpill = do
   env <- get
-  lastEnding' 0 0 0 $ active env
+  liveRanges <- sequence $ (active env) <&> (lookupLiveRange . fst)
+  let last = foldl1' (oldest noSpill) $ zip (liveRanges <&> rangeEnd) $ active env
   where
-    lastEnding' index best bestEnd ((id, Register reg):rest) = do
+    oldest noSpill (end, res) (end', res') =
+      if end > end'
+        then (end, res)
+        else (end', res')
+
+{-
+lastEnding :: [Id] -> Alloc reg ActiveAlloc
+lastEnding noSpill = do
+  env <- get
+  lastEnding' noSpill 0 0 0 $ active env
+  where
+    lastEnding' noSpill index best bestEnd ((id, InRegister reg):rest) = do
       LiveRange _ end <- lookupLiveRange id
-      if end > bestEnd
+      if notElem id noSpill && end > bestEnd
         then lastEnding' (index + 1) index end rest
         else lastEnding' (index + 1) best bestEnd rest
-    lastEnding' index best bestEnd ((_, Stack _):rest) = lastEnding' (index + 1) best bestEnd rest
-    lastEnding' _ best _ [] = best
-
-popActive :: ActiveAlloc -> Alloc reg (Id, Reg)
+    lastEnding' noSpill index best bestEnd ((_, InStack _):rest) = lastEnding' noSpill (index + 1) best bestEnd rest
+    lastEnding' _ _ best _ [] = return best
+-}
+popActive :: ActiveAlloc -> Alloc reg (Id, reg)
 popActive index = do
   env <- get
   let (result, newActive) = pop index $ active env
   put $ env { active = newActive }
   return result
   where
-    pop 0 (result:_) = result
-    pop n (_:rest) = pop (n - 1) rest
+    pop 0 (result:rest) = case result of 
+      (id, InRegister reg) -> ((id, reg), rest)
+    pop n (head:rest) = 
+      let (result, rest') = pop (n - 1) rest in
+      (result, head:rest')
 
 registerInstr :: Line -> Id -> reg -> Alloc reg ()
 registerInstr line id reg = do
   lift $ tell [Register line id reg]
 
-spillInstr :: Line -> Id -> StackSlot -> Alloc reg ()
-spillInstr line id slot = do
-  lift $ tell [Spill line id slot]
+spillInstr :: Line -> reg -> StackSlot -> Alloc reg ()
+spillInstr line reg slot = do
+  lift $ tell [Spill line reg slot]
 
 unSpillInstr :: Line -> reg -> StackSlot -> Alloc reg ()
 unSpillInstr line id slot = do
@@ -219,16 +231,17 @@ spillSlot = do
   put $ env { spillCount = slot + 1 }
   return $ slot
 
-spillThenAlloc :: Line -> Id -> Alloc reg ()
-spillThenAlloc line id = do
-  toSpill <- lastEnding
+-- spill any id that isn't in the noSpill list in order to free up a register
+-- and allocate `id`
+spillThenAlloc :: Line -> Id -> [Id] -> Alloc reg ()
+spillThenAlloc line id noSpill = do
+  toSpill <- lastEnding noSpill
   (oldId, reg) <- popActive toSpill
-  registerInstr line id reg
   slot <- spillSlot
-  spillInstr line oldId slot
+  spillInstr line reg slot
   env <- get
   put $ env {
-    active = (id, Register reg):(oldId, Stack slot):(active env)
+    active = (id, InRegister reg):(oldId, InStack slot):(active env)
   }
 
 freeUnused :: Line -> Alloc reg ()
@@ -245,15 +258,35 @@ freeUnused line = do
 allocateBlock :: Instruction i => Line -> [i] -> Alloc reg ()
 allocateBlock line [] = return ()
 allocateBlock line (instr:rest) = do
-  freeUnused line
   let used = uses instr
+  sequence $ used <&> \id -> unspill line id used
+
+  freeUnused line
+
+  let id = defines instr
+  reg <- allocateReg line id []
+  registerInstr line id reg
   
   allocateBlock (line + 1) rest
 
-type AllocList reg = [Alloc reg]
+unspill :: Line -> Id -> [Id] -> Alloc reg ()
+unspill line id noSpill = do
+  env <- get
+  let (_, location) = head $ filter (((==) id) . fst) $ active env
+  case location of
+    InRegister _ -> return ()
+    InStack slot -> unspillFrom line id noSpill slot
+  where
+    unspillFrom line id noSpill slot = do
+      reg <- allocateReg line id noSpill
+      unSpillInstr line reg slot
+
+      
+
+type AllocList reg = [AllocInstr reg]
 data AllocInstr reg = Register Line Id reg | Spill Line reg StackSlot | UnSpill Line reg StackSlot
 
-type Alloc reg a = StateT (Env reg) (Writer (Allocs regs)) a
+type Alloc reg a = StateT (Env reg) (Writer (AllocList reg)) a
 
 class Instruction instr where
   defines :: instr -> Id
